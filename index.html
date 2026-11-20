@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crewsscales office</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #000;
+    --carpet: #0d0c09;
+    --wall: #15130d;
+    --line: #7d6a3c;      /* quiet structure: muted gold */
+    --gold: #d4a843;
+    --bright: #ffd978;
+    --paper: #f6f1e4;
+    --dim: #8f8877;
+    --leaf: #55622f;
+    --display: "Bricolage Grotesque", "Arial Black", sans-serif;
+    --body: "Instrument Sans", system-ui, sans-serif;
+    --mono: ui-monospace, Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--ink); color: var(--paper);
+    font-family: var(--body); font-size: 15px; line-height: 1.45;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 348px;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    overflow: hidden;
+  }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--paper); outline-offset: 2px; }
+
+  header { grid-column: 1 / -1; display: flex; align-items: center; gap: 20px; padding: 14px 28px; border-bottom: 1px solid #d4a84359; }
+  .mark { width: 26px; height: 26px; flex: none; }
+  h1 { font-family: var(--display); font-weight: 700; font-size: 21px; letter-spacing: -0.02em; margin: 0; }
+  .floor { color: var(--dim); margin: 0; padding-left: 20px; border-left: 1px solid #ffffff26; }
+  .live + .clock { margin-left: 0; }
+  #live { margin-left: auto; }
+  .clock { margin: 0 0 0 auto; text-align: right; color: var(--dim); font-size: 13px; }
+  .clock b { display: block; font-family: var(--display); font-size: 18px; color: var(--paper); font-weight: 500; font-variant-numeric: tabular-nums; }
+
+  #ops { grid-column: 1 / -1; display: none; gap: 8px; align-items: center; flex-wrap: wrap; padding: 10px 28px; border-bottom: 1px solid #ffffff1f; background: #0d0c09; }
+  body.operator #ops { display: flex; }
+  #ops button { background: none; border: 1px solid var(--line); border-radius: 4px; padding: 6px 12px; }
+  #ops button:hover { border-color: var(--gold); }
+  #ops button.primary { background: var(--gold); border-color: var(--gold); color: #000; font-weight: 600; }
+  #ops button:disabled { opacity: .45; cursor: default; }
+  #ops input { font: 13px var(--mono); background: #000; color: var(--paper); border: 1px solid var(--line); border-radius: 4px; padding: 7px 10px; width: 260px; }
+  #ops label { color: var(--dim); font-size: 13px; }
+  #runline { margin: 0 0 0 auto; color: var(--paper); font-size: 14px; }
+  #runline a { color: var(--gold); }
+
+  #stage { grid-column: 1; grid-row: 3; min-height: 0; background: radial-gradient(ellipse 70% 65% at 50% 55%, #241c0a 0%, #000 75%); }
+  #stage svg { width: 100%; height: 100%; display: block; }
+
+  .wallname { font-family: var(--display); font-weight: 700; font-size: 38px; fill: var(--gold); letter-spacing: -0.01em; }
+  .roomname { font-family: var(--display); font-weight: 700; font-size: 17px; fill: var(--paper); opacity: .9; letter-spacing: .04em; }
+
+  .motto { font: 500 15px var(--display); fill: var(--paper); opacity: .85; }
+  #feed li { font: 13px var(--body); word-break: normal; }
+  #feed b { font-weight: 600; color: var(--gold); }
+  .bub { fill: var(--paper); }
+  .bubt { font: 500 12.5px var(--body); fill: #000; }
+  .actor { transition: none; }
+  #voice { margin-left: 18px; background: none; border: 1px solid var(--line); border-radius: 4px; padding: 5px 10px; font-size: 13px; }
+  #voice[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
+  .live { margin: 0; color: var(--bright); font-size: 13px; }
+  .brainname { font: 600 13px var(--body); fill: var(--paper); }
+  .agent[data-state="working"] .ln { animation: type 1.4s steps(4) infinite; }
+  @keyframes type { 0% { stroke-opacity: .15; } 100% { stroke-opacity: .7; } }
+
+  .agent { cursor: pointer; outline: none; }
+  .agent .body { fill: var(--gold); }
+  .agent .collar { fill: var(--paper); }
+  .agent .tie { fill: #000; }
+  .agent .head { fill: var(--paper); }
+  .agent .visor { fill: #000; }
+  .agent .eye { fill: var(--dim); }
+    .agent .plate { fill: #0d0c09; stroke: var(--line); stroke-width: 1; }
+  .agent .name { font: 600 13px var(--body); fill: var(--paper); }
+  .agent .sig { font: 600 12px var(--body); fill: var(--dim); }
+  .agent[data-state="idle"] .body { fill: #6b5a2c; }
+  .agent[data-state="working"] .eye, .agent[data-state="working"] .sig { fill: var(--bright); }
+  .agent[data-state="working"] .plate { stroke: var(--bright); }
+  .actor[data-state="working"] .bot { animation: bob 1s ease-in-out infinite; }
+  .agent[data-state="working"] .scr { filter: drop-shadow(0 0 6px #ffd978); }
+  @keyframes bob { 50% { transform: translateY(-3px); } }
+  .agent[data-state="done"] .eye, .agent[data-state="done"] .sig { fill: var(--gold); }
+  .agent[data-state="needs-you"] .eye { fill: #fff; }
+  .agent[data-state="needs-you"] .plate { fill: var(--gold); stroke: var(--gold); }
+  .agent[data-state="needs-you"] .name, .agent[data-state="needs-you"] .sig { fill: #000; }
+  .agent:hover .plate, .agent:focus-visible .plate, .agent.sel .plate { fill: #2b2619; stroke: var(--paper); stroke-width: 1.5; }
+  .agent:hover .name, .agent:hover .sig, .agent:focus-visible .name, .agent:focus-visible .sig, .agent.sel .name, .agent.sel .sig { fill: var(--paper); }
+  .agent.you .body { fill: var(--paper); } .agent.you .head { fill: var(--gold); }
+
+  .brain path { fill: none; stroke: var(--gold); stroke-width: 2.2; stroke-linecap: round; filter: drop-shadow(0 0 7px var(--gold)); }
+  .brain.cold path { stroke: var(--dim); filter: none; stroke-dasharray: 4 5; }
+  
+  .panel { grid-column: 2; grid-row: 3 / 5; border-left: 1px solid #d4a84359; padding: 24px; overflow-y: auto; background: #0d0c09; }
+  .badge { display: flex; gap: 14px; align-items: center; padding-bottom: 18px; border-bottom: 1px solid #ffffff1f; margin-bottom: 18px; }
+  .badge svg { width: 52px; height: 52px; flex: none; border: 1px solid var(--line); border-radius: 4px; background: #000; }
+  .panel h2 { font-family: var(--display); font-size: 19px; font-weight: 700; letter-spacing: -0.01em; margin: 0; }
+  .panel .dept { color: var(--dim); margin: 0; }
+  .panel p { margin: 0 0 14px; max-width: 34ch; }
+  .panel h3 { font: 600 13px var(--body); color: var(--dim); margin: 20px 0 6px; }
+  .panel ul { margin: 0; padding: 0; list-style: none; }
+  .panel li { font: 12.5px var(--mono); padding: 7px 0; border-bottom: 1px solid #ffffff14; word-break: break-all; }
+  .panel code { font: 13px var(--mono); background: #ffffff14; padding: 1px 6px; border-radius: 3px; }
+  .panel button { background: none; border: 1px solid var(--gold); border-radius: 4px; padding: 6px 12px; }
+  .state { display: inline-block; padding: 3px 10px; border-radius: 3px; font-weight: 600; font-size: 13px; border: 1px solid currentColor; margin-bottom: 14px; }
+  .state.idle { color: var(--dim); } .state.working { color: var(--bright); } .state.done { color: var(--gold); }
+  .state.needs-you { color: #000; background: var(--gold); border-color: var(--gold); }
+
+  footer { grid-column: 1; grid-row: 4; display: grid; grid-template-columns: repeat(6, 1fr); border-top: 1px solid #ffffff1f; }
+  footer div { padding: 12px 20px 14px; border-right: 1px solid #ffffff14; color: var(--dim); font-size: 13px; }
+  footer div:first-child { padding-left: 28px; }
+  footer b { display: block; font-family: var(--display); font-weight: 500; font-size: 24px; color: var(--paper); font-variant-numeric: tabular-nums; }
+  footer .wait b { color: var(--gold); }
+
+  @media (max-width: 900px) {
+    body { grid-template-columns: 1fr; grid-template-rows: auto auto 62vh auto auto; overflow: auto; }
+    .panel { grid-column: 1; grid-row: 5; border-left: 0; border-top: 1px solid #d4a84359; }
+    footer { grid-template-columns: repeat(3, 1fr); }
+    .floor { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { .agent .ln, .agent .bot { animation: none !important; } }
+</style>
+</head>
+<body>
+<header>
+  <svg class="mark" viewBox="0 0 26 26" aria-hidden="true"><path d="M21 6.5A10 10 0 1 0 21 19.5" fill="none" stroke="#d4a843" stroke-width="2.4" stroke-linecap="round"/><path d="M17 9.6A5.4 5.4 0 1 0 17 16.4" fill="none" stroke="#d4a843" stroke-width="2.4" stroke-linecap="round"/></svg>
+  <h1>Crewsscales office</h1>
+  <p class="floor">Content operations floor</p>
+  <p class="live" id="live" aria-live="polite"></p>
+  <p class="clock"><b id="now"></b><span id="updated"></span></p>
+  <button id="voice" aria-pressed="false">Voices off</button>
+</header>
+
+<div id="ops" aria-label="Operator controls">
+  <span id="connect">
+    <label for="tok">GitHub access token</label>
+    <input id="tok" type="password" autocomplete="off" placeholder="Stays in this browser only">
+    <button id="save" class="primary">Connect</button>
+  </span>
+  <span id="cmds" hidden>
+    <button class="primary" data-cmd="daily">Run the whole day</button>
+    <button data-cmd="research">Research</button>
+    <button data-cmd="script">Script</button>
+    <button data-cmd="edit">Edit prep</button>
+    <button data-cmd="publish">Publishing plan</button>
+    <button data-cmd="inbox">Inbox</button>
+    <button id="forget">Disconnect</button>
+  </span>
+  <p id="runline" aria-live="polite"></p>
+</div>
+
+<main id="stage" aria-label="Office floor. Each desk is an agent; select one for details."></main>
+<aside class="panel" id="panel" aria-live="polite"></aside>
+<footer id="totals"></footer>
+
+<script src="status.js"></script>
+<script>
+// ---- settings -------------------------------------------------------------
+const REPO = "vaininstinct/crewsscales-office";   // private repo that holds the agents
+const WORKFLOW = "office.yml";                     // GitHub Actions workflow that runs a command
+const TOKEN_KEY = "crewsscales-office-token";
+
+// ---- isometric helpers ----------------------------------------------------
+const U = 40, C = Math.cos(Math.PI / 6), S = 0.5;
+const P = (x, y, z = 0) => [(x - y) * C * U, (x + y) * S * U - z * U];
+const pts = (a) => a.map((p) => p.map((n) => n.toFixed(1)).join(",")).join(" ");
+const NS = "http://www.w3.org/2000/svg";
+const el = (t, at = {}, txt) => { const e = document.createElementNS(NS, t); for (const k in at) e.setAttribute(k, at[k]); if (txt != null) e.textContent = txt; return e; };
+const quad = (a, at) => el("polygon", { points: pts(a), ...at });
+
+// materials: [top, left face (towards viewer, +y), right face (+x)]
+const WOOD = ["#8a6a41", "#4a3721", "#63492c"], DARK = ["#2e2a20", "#15130e", "#201d15"],
+      CREAM = ["#f1e9d6", "#a69d87", "#cdc4ad"], METAL = ["#45423b", "#1b1a17", "#2a2824"], BRASS = ["#e6c264", "#8c6b22", "#b48a30"];
+
+function box(g, x, y, w, d, h, z = 0, m = DARK) {
+  g.append(
+    quad([P(x, y + d, z + h), P(x + w, y + d, z + h), P(x + w, y + d, z), P(x, y + d, z)], { fill: m[1] }),
+    quad([P(x + w, y, z + h), P(x + w, y + d, z + h), P(x + w, y + d, z), P(x + w, y, z)], { fill: m[2] }),
+    quad([P(x, y, z + h), P(x + w, y, z + h), P(x + w, y + d, z + h), P(x, y + d, z + h)], { fill: m[0] })
+  );
+  return g;
+}
+const shadow = (g, x, y, w, d) => g.append(quad([P(x - .08, y - .08), P(x + w + .18, y - .08), P(x + w + .18, y + d + .18), P(x - .08, y + d + .18)], { fill: "#000", opacity: .5 }));
+let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+
+// ---- floor plan (20 x 16) -------------------------------------------------
+const FW = 20, FD = 16, WALL = 3.4;
+const ROOMS = {
+  Research:   { x: 1,    y: 1,    w: 7.2, d: 3.4, axis: "x", cmd: "research" },
+  Scripting:  { x: 11.8, y: 1,    w: 7.2, d: 3.4, axis: "x", cmd: "script" },
+  Inbox:      { x: 15,   y: 5.4,  w: 4,   d: 6.8, axis: "y", cmd: "inbox" },
+  Editing:    { x: 1,    y: 11.4, w: 7.2, d: 3.4, axis: "x", cmd: "edit" },
+  Publishing: { x: 9,    y: 11.4, w: 5,   d: 3.4, axis: "x", cmd: "publish" },
+};
+const DIRECTOR = { x: 1, y: 5.4, w: 4, d: 4.6 };
+const TABLE = [10, 7.55];
+const LABEL = { idle: "Idle", working: "Working", done: "Finished today", "needs-you": "Needs sign-off" };
+const SIG = { idle: "–", working: "●", done: "✓", "needs-you": "!" };
+let selected = null, status = null;
+
+function bot(px, py, human) {
+  const wrap = el("g", { transform: `translate(${px.toFixed(1)},${py.toFixed(1)}) scale(1.25)` });
+  wrap.append(el("ellipse", { cx: 0, cy: -2, rx: 13, ry: 5.5, fill: "#000", opacity: .55 }));
+  const g = el("g", { class: "bot" });
+  g.append(
+    el("rect", { class: "body", x: -9, y: -30, width: 18, height: 28, rx: 8 }),
+    quad([[-6, -30], [6, -30], [0, -21]], { class: "collar" }),
+    quad([[-1.6, -28], [1.6, -28], [2.2, -14], [0, -11], [-2.2, -14]], { class: "tie" })
+  );
+  if (human) g.append(el("circle", { class: "head", cx: 0, cy: -41, r: 10 }));
+  else g.append(
+    el("rect", { class: "head", x: -13, y: -50, width: 26, height: 19, rx: 8 }),
+    el("rect", { class: "visor", x: -9, y: -46, width: 18, height: 10, rx: 5 }),
+    el("circle", { class: "eye", cx: -4, cy: -41, r: 2 }),
+    el("circle", { class: "eye", cx: 4, cy: -41, r: 2 })
+  );
+  wrap.append(g); return wrap;
+}
+
+function plate(px, py, text, sig) {
+  const w = text.length * 7.4 + 40, x0 = px - 16, y0 = py - 100;
+  const g = el("g");
+  g.append(
+    el("rect", { class: "plate", x: x0, y: y0, width: w, height: 24, rx: 3 }),
+    el("text", { class: "sig", x: x0 + 10, y: y0 + 16.5 }, sig),
+    el("text", { class: "name", x: x0 + 25, y: y0 + 16.5 }, text)
+  );
+  return g;
+}
+
+function chair(g, x, y) {            // seen from behind: seat, then the back panel nearest the viewer
+  box(g, x + .15, y + .15, .14, .14, .28, 0, METAL);
+  box(g, x, y, .44, .44, .08, .28, CREAM);
+  box(g, x, y + .4, .44, .07, .5, .28, CREAM);
+}
+
+// desk with a monitor whose screen faces the viewer; state decides what the screen shows
+function workstation(g, sx, sy, state) {
+  shadow(g, sx - .7, sy - .35, 1.4, .7);
+  box(g, sx - .7, sy - .35, .07, .7, .4, 0, DARK); box(g, sx + .63, sy - .35, .07, .7, .4, 0, DARK);
+  box(g, sx - .7, sy - .35, 1.4, .7, .07, .4, WOOD);
+  box(g, sx - .06, sy - .22, .12, .1, .14, .47, METAL);
+  box(g, sx - .4, sy - .2, .8, .05, .46, .58, METAL);
+  const y = sy - .15, lit = { idle: "#1d1b15", working: "#f6f1e4", done: "#b9933a", "needs-you": "#ffd978" }[state];
+  g.append(quad([P(sx - .36, y, .62), P(sx + .36, y, .62), P(sx + .36, y, 1), P(sx - .36, y, 1)], { fill: lit, class: "scr" }));
+  if (state !== "idle") for (const [z, len] of [[.92, .5], [.84, .34], [.76, .44], [.68, .22]])
+    g.append(el("line", { x1: P(sx - .3, y, z)[0], y1: P(sx - .3, y, z)[1], x2: P(sx - .3 + len, y, z)[0], y2: P(sx - .3 + len, y, z)[1], stroke: "#000", "stroke-opacity": .55, "stroke-width": 1.6, class: "ln" }));
+  g.append(quad([P(sx - .28, sy + .02, .475), P(sx + .28, sy + .02, .475), P(sx + .28, sy + .2, .475), P(sx - .28, sy + .2, .475)], { fill: "#15130e" }));
+  chair(g, sx - .22, sy + .5);
+}
+
+function plant(g, x, y, big) {
+  box(g, x, y, .42, .42, big ? .6 : .45, 0, BRASS);
+  const [px, py] = P(x + .21, y + .21, big ? .6 : .45), k = big ? 1.35 : 1;
+  for (const [dx, dy, r, c] of [[0, -16, 11, "#4c5a2a"], [-9, -8, 9, "#3f4c22"], [9, -9, 9, "#5a6a33"], [0, -28, 8, "#66783a"]]) g.append(el("circle", { cx: px + dx * k, cy: py + dy * k, r: r * k, fill: c }));
+}
+
+function draw() {
+  seed = 7;
+  const svg = el("svg", { viewBox: "-575 -165 1290 900", role: "group" });
+  const defs = el("defs");
+  defs.innerHTML = `<radialGradient id="pool"><stop offset="0" stop-color="#ffd978" stop-opacity=".2"/><stop offset="1" stop-color="#ffd978" stop-opacity="0"/></radialGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe9a8" stop-opacity=".2"/><stop offset=".45" stop-color="#d4a843" stop-opacity=".05"/><stop offset="1" stop-color="#d4a843" stop-opacity=".12"/></linearGradient>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0c1322"/><stop offset="1" stop-color="#2a2114"/></linearGradient>`;
+  svg.append(defs);
+
+  // ----- back walls -----
+  svg.append(quad([P(0, 0), P(FW, 0), P(FW, 0, WALL), P(0, 0, WALL)], { fill: "#1b1812" }));
+  svg.append(quad([P(0, 0), P(0, FD), P(0, FD, WALL), P(0, 0, WALL)], { fill: "#14120d" }));
+  svg.append(quad([P(0, 0, WALL), P(FW, 0, WALL), P(FW, -.3, WALL), P(-.3, -.3, WALL)], { fill: "#3a3424" }));
+  svg.append(quad([P(0, 0, WALL), P(0, FD, WALL), P(-.3, FD, WALL), P(-.3, -.3, WALL)], { fill: "#2e2a20" }));
+  svg.append(el("line", { x1: P(0, 0)[0], y1: P(0, 0)[1], x2: P(0, 0, WALL)[0], y2: P(0, 0, WALL)[1], stroke: "#000", "stroke-opacity": .6 }));
+  for (const [a, b, z] of [[0, FW, .28]]) {   // skirting
+    svg.append(quad([P(a, 0), P(b, 0), P(b, 0, z), P(a, 0, z)], { fill: "#0c0b08" }));
+    svg.append(quad([P(0, a), P(0, FD), P(0, FD, z), P(0, a, z)], { fill: "#090806" }));
+  }
+  // windows with a night skyline (right wall runs along x, left wall along y)
+  const windowOn = (along, s, w) => {
+    const W = (t, z) => (along === "x" ? P(t, 0, z) : P(0, t, z));
+    svg.append(quad([W(s, .9), W(s + w, .9), W(s + w, 2.9), W(s, 2.9)], { fill: "url(#sky)" }));
+    for (let t = s + .06; t < s + w - .25; ) {
+      const bw = .22 + rnd() * .3, bh = 1.15 + rnd() * 1.3;
+      svg.append(quad([W(t, .9), W(t + bw, .9), W(t + bw, bh), W(t, bh)], { fill: "#0a0d14" }));
+      for (let z = 1; z < bh - .1; z += .16) for (let u = t + .05; u < t + bw - .06; u += .1) if (rnd() > .55)
+        svg.append(quad([W(u, z), W(u + .05, z), W(u + .05, z + .07), W(u, z + .07)], { fill: "#ffd978", opacity: .35 + rnd() * .6 }));
+      t += bw + .04;
+    }
+    svg.append(quad([W(s, .9), W(s + w, .9), W(s + w, 2.9), W(s, 2.9)], { fill: "url(#glass)", stroke: "#6b5a2c", "stroke-width": 2.5 }));
+    const m = W(s + w / 2, .9), n = W(s + w / 2, 2.9);
+    svg.append(el("line", { x1: m[0], y1: m[1], x2: n[0], y2: n[1], stroke: "#6b5a2c", "stroke-width": 2 }));
+  };
+  for (const s of [1.2, 3.6, 6]) windowOn("x", s, 1.9);
+  for (const s of [12, 14.4, 16.8]) windowOn("x", s, 1.9);
+  for (const s of [1.2, 3.4]) windowOn("y", s, 1.7);
+  // feature wall between the windows: mark and line
+  const [mx, my] = P(10, 0, 2.15);
+  const mark = el("g", { transform: `matrix(${C},${S},0,1,${mx.toFixed(1)},${my.toFixed(1)})` });
+  mark.append(
+    el("path", { d: "M17 -17A24 24 0 1 0 17 17", fill: "none", stroke: "#d4a843", "stroke-width": 5, "stroke-linecap": "round" }),
+    el("path", { d: "M8 -8A12 12 0 1 0 8 8", fill: "none", stroke: "#d4a843", "stroke-width": 5, "stroke-linecap": "round" }),
+    el("text", { class: "motto", y: 52, "text-anchor": "middle" }, "We build growth engines.")
+  );
+  svg.append(mark);
+  const [wx, wy] = P(0, 15.5, 1.55);
+  svg.append(el("text", { class: "wallname", transform: `matrix(${C},${-S},0,1,${wx.toFixed(1)},${wy.toFixed(1)})` }, "Crewsscales"));
+
+  // ----- floor -----
+  svg.append(quad([P(0, 0), P(FW, 0), P(FW, FD), P(0, FD)], { fill: "#14110c" }));
+  for (let i = 0; i < FW; i += 2) for (let j = 0; j < FD; j += 2) if ((i + j) % 4 === 0) svg.append(quad([P(i, j), P(i + 2, j), P(i + 2, j + 2), P(i, j + 2)], { fill: "#191610" }));
+  svg.append(quad([P(0, FD), P(FW, FD), P(FW, FD, -.35), P(0, FD, -.35)], { fill: "#0a0907" }));
+  svg.append(quad([P(FW, 0), P(FW, FD), P(FW, FD, -.35), P(FW, 0, -.35)], { fill: "#100e0a" }));
+  svg.append(el("polyline", { points: pts([P(0, FD), P(FW, FD), P(FW, 0)]), fill: "none", stroke: "#d4a843", "stroke-width": 2 }));
+
+  const byRoom = {};
+  status.agents.forEach((a) => (byRoom[a.dept] ||= []).push(a));
+  const things = [], homes = [];
+  const add = (depth, make) => things.push({ depth, make });
+
+  const room = (name, r, hot) => {
+    svg.append(quad([P(r.x, r.y), P(r.x + r.w, r.y), P(r.x + r.w, r.y + r.d), P(r.x, r.y + r.d)], { fill: hot ? "#3a2f14" : "#1f1b13", stroke: hot ? "#ffd978" : "#6b5a2c", "stroke-width": hot ? 2 : 1 }));
+    const [cx, cy] = P(r.x + r.w / 2, r.y + r.d / 2);
+    svg.append(el("ellipse", { cx, cy, rx: (r.w + r.d) * C * U * .42, ry: (r.w + r.d) * S * U * .42, fill: "url(#pool)" }));
+    add(r.x + r.y + .01, () => {      // glass partitions with a brass top rail, on the two back edges
+      const g = el("g"), H = 1.5;
+      for (const [a, b] of [[[r.x, r.y], [r.x + r.w, r.y]], [[r.x, r.y], [r.x, r.y + r.d]]]) {
+        g.append(quad([P(...a), P(...b), P(...b, H), P(...a, H)], { fill: "url(#glass)", stroke: "#d4a843", "stroke-opacity": .35 }));
+        g.append(el("line", { x1: P(...a, H)[0], y1: P(...a, H)[1], x2: P(...b, H)[0], y2: P(...b, H)[1], stroke: "#d4a843", "stroke-width": 2.5 }));
+      }
+      const [tx, ty] = P(r.x, r.y + r.d - .3, .95);  // department name lettered on the side glass
+      g.append(el("text", { class: "roomname", transform: `matrix(${C},${-S},0,1,${tx.toFixed(1)},${ty.toFixed(1)})` }, name));
+      const p0 = P(r.x, r.y), p1 = P(r.x, r.y, H);
+      g.append(el("line", { x1: p0[0], y1: p0[1], x2: p1[0], y2: p1[1], stroke: "#d4a843", "stroke-width": 2.5 }));
+      return g;
+    });
+  };
+
+  for (const [name, r] of Object.entries(ROOMS)) {
+    const crew = byRoom[name] || [];
+    room(name, r, crew.some((a) => a.state === "working"));
+    crew.forEach((a, i) => {
+      const step = (r.axis === "x" ? r.w - .4 : r.d - .9) / crew.length;
+      const sx = r.axis === "x" ? r.x + .2 + step * (i + .5) - .5 : r.x + 1.3;
+      const sy = r.axis === "x" ? r.y + 1.2 : r.y + .2 + step * (i + .5);
+      add(sx + sy, () => stationNode(a, sx, sy));
+      const home = [sx + 1.05, sy + .15];
+      homes.push({ a, home, exit: r.axis === "y" ? [19.5, home[1]] : [home[0], r.y < 5 ? 4.9 : 15.4] });
+    });
+  }
+
+  // director's office: bookshelf on the wall, executive desk, you
+  room("Director", DIRECTOR, false);
+  add(.2 + 6, () => {
+    const g = el("g"); box(g, .12, 5.9, .45, 3.4, 2.3, 0, DARK);
+    for (let z = .25; z < 2.1; z += .52) {
+      g.append(quad([P(.57, 5.98, z), P(.57, 9.22, z), P(.57, 9.22, z + .42), P(.57, 5.98, z + .42)], { fill: "#0c0b08" }));
+      for (let y = 6.02; y < 9.1; ) { const w = .07 + rnd() * .09, h = .26 + rnd() * .14; if (rnd() > .15) g.append(quad([P(.57, y, z), P(.57, y + w, z), P(.57, y + w, z + h), P(.57, y, z + h)], { fill: ["#d4a843", "#efe7d3", "#63492c", "#8f8877", "#b48a30"][Math.floor(rnd() * 5)] })); y += w + .02; }
+    }
+    return g;
+  });
+  add(DIRECTOR.x + 1.9 + DIRECTOR.y + 2, () => directorNode(DIRECTOR.x + 1.9, DIRECTOR.y + 2));
+
+  // boardroom: rug, table, chairs, the Brand Brain above
+  svg.append(quad([P(7.2, 5.5), P(12.8, 5.5), P(12.8, 9.7), P(7.2, 9.7)], { fill: "#241e12", stroke: "#d4a843", "stroke-opacity": .5 }));
+  svg.append(quad([P(7.5, 5.8), P(12.5, 5.8), P(12.5, 9.4), P(7.5, 9.4)], { fill: "none", stroke: "#d4a843", "stroke-opacity": .25 }));
+  { const [cx, cy] = P(...TABLE); svg.append(el("ellipse", { cx, cy, rx: 230, ry: 130, fill: "url(#pool)" })); }
+  add(TABLE[0] + TABLE[1] + .4, () => {
+    const g = el("g"), [tx, ty] = TABLE;
+    for (const x of [-1.35, -.22, .9]) { box(g, tx + x, ty - 1.45, .44, .07, .5, .28, CREAM); box(g, tx + x, ty - 1.38, .44, .44, .08, .28, CREAM); }
+    box(g, tx - 2.35, ty - .22, .44, .44, .08, .28, CREAM);
+    shadow(g, tx - 1.7, ty - .8, 3.4, 1.6);
+    box(g, tx - 1.1, ty - .35, 2.2, .7, .4, 0, DARK);
+    box(g, tx - 1.7, ty - .8, 3.4, 1.6, .08, .4, WOOD);
+    for (const x of [-1.35, -.22, .9]) chair(g, tx + x, ty + .95);
+    box(g, tx + 1.9, ty - .22, .44, .44, .08, .28, CREAM);
+    const [bx, by] = P(tx, ty, .5);
+    g.append(el("ellipse", { cx: bx, cy: by, rx: 34, ry: 16, fill: "#ffd978", opacity: status.brain.ready ? .35 : .12 }));
+    const b = el("g", { class: "brain" + (status.brain.ready ? "" : " cold"), transform: `translate(${bx.toFixed(1)},${(by - 62).toFixed(1)}) scale(1.15)` });
+    b.append(
+      el("path", { d: "M-4 -22c-14-8-32 2-28 18-10 6-8 22 4 24 2 12 18 14 24 4z" }),
+      el("path", { d: "M4 -22c14-8 32 2 28 18 10 6 8 22-4 24-2 12-18 14-24 4z" }),
+      el("path", { d: "M-22 -4c6-4 12-2 14 4M22 -4c-6-4-12-2-14 4M-18 12c6-2 10 0 12 4M18 12c-6-2-10 0-12 4" })
+    );
+    g.append(b, el("text", { class: "brainname", x: bx, y: by - 100, "text-anchor": "middle" }, "Brand Brain"));
+    return g;
+  });
+
+  // lounge by the entrance, and plants
+  add(16 + 14.6, () => {
+    const g = el("g");
+    shadow(g, 15.4, 13, 2.6, 1); box(g, 15.4, 13, 2.6, .25, .85, 0, CREAM); box(g, 15.4, 13.25, 2.6, .75, .4, 0, CREAM);
+    box(g, 15.4, 13.25, .25, .75, .62, 0, CREAM); box(g, 17.75, 13.25, .25, .75, .62, 0, CREAM);
+    box(g, 16, 14.5, 1.4, .7, .06, .3, WOOD); box(g, 16.55, 14.75, .3, .2, .3, 0, METAL);
+    return g;
+  });
+  for (const [x, y, big] of [[18.9, 14.9, 1], [.45, 10.1, 0], [19.1, .4, 0], [8.4, 14.9, 0], [14.3, 5.6, 0]]) add(x + y, () => { const g = el("g"); plant(g, x, y, big); return g; });
+
+  things.sort((p, q) => p.depth - q.depth).forEach((t) => svg.append(t.make()));
+  mountActors(svg, homes);
+
+  const stage = document.getElementById("stage");
+  const hadFocus = document.activeElement?.closest?.("#stage");
+  stage.replaceChildren(svg);
+  if (hadFocus) svg.querySelector(".actor.sel, .you.sel")?.focus();
+  chrome();
+}
+
+function clickable(g, pick) {
+  g.addEventListener("click", pick);
+  g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+}
+
+function stationNode(a, sx, sy) {
+  const g = el("g", { class: "agent", "data-state": a.state, "aria-hidden": "true" });
+  workstation(g, sx, sy, a.state);
+  g.addEventListener("click", () => { selected = a.id; draw(); });
+  return g;
+}
+
+function directorNode(sx, sy) {
+  const n = status.totals.waiting;
+  const g = el("g", { class: "agent you" + (selected === null ? " sel" : ""), "data-state": n ? "needs-you" : "idle", tabindex: 0, role: "button", "aria-label": `You, the director. ${n} files waiting for sign-off` });
+  shadow(g, sx - 1, sy - .45, 2, .9);
+  box(g, sx - 1, sy - .45, .1, .9, .42, 0, DARK); box(g, sx + .9, sy - .45, .1, .9, .42, 0, DARK);
+  box(g, sx - 1, sy - .45, 2, .9, .09, .42, WOOD);
+  box(g, sx - .75, sy - .2, .5, .34, .03, .51, CREAM); box(g, sx + .3, sy - .25, .12, .12, .3, .51, BRASS);
+  chair(g, sx - .22, sy + .65);
+  const [px, py] = P(sx + 1.45, sy + .2);
+  g.append(bot(px, py, true), plate(px, py, n ? `You, ${n} to sign off` : "You", n ? "!" : "–"));
+  clickable(g, () => { selected = null; draw(); });
+  return g;
+}
+
+// ---- life on the floor: agents walk, hand work over and say what they are doing ----
+// Everything they say is read from the status file. The movement replays the pipeline; it is not a live feed.
+const NEXT = { "trend-scout": "idea-ranker", "competitor-analyst": "idea-ranker", "idea-ranker": "hook-writer", "hook-writer": "script-writer",
+  "script-writer": "voice-check", "voice-check": "cutter", cutter: "scheduler", captions: "scheduler", thumbnail: "scheduler",
+  scheduler: "cross-poster", "comment-replies": "lead-logger", "dm-closer": "lead-logger" };
+const NODES = { NW: [.5, 4.9], NC: [6.1, 4.9], ND: [14.1, 4.9], NE: [19.5, 4.9], WB: [.5, 10.7], BC: [6.1, 10.7], BD: [14.1, 10.7], SW: [.5, 15.4], SD: [14.1, 15.4], SE: [19.5, 15.4] };
+const EDGES = [["NW", "NC"], ["NC", "ND"], ["ND", "NE"], ["WB", "BC"], ["BC", "BD"], ["NC", "BC"], ["ND", "BD"], ["BD", "SD"], ["SW", "SD"], ["SD", "SE"], ["NW", "WB"], ["WB", "SW"], ["NE", "SE"]];
+const SPOTS = {
+  director: { pt: [5.45, 7.9], exit: [6.1, 7.9], busy: null },
+  lounge1: { pt: [14.9, 14.3], exit: [14.1, 14.3], busy: null }, lounge2: { pt: [14.9, 13.3], exit: [14.1, 13.3], busy: null },
+  board1: { pt: [7, 6.6], exit: [6.1, 6.6], busy: null }, board2: { pt: [7, 8.5], exit: [6.1, 8.5], busy: null }, board3: { pt: [13, 7.5], exit: [14.1, 7.5], busy: null },
+};
+const actors = new Map();
+const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+let voices = false, actorLayer = null;
+
+const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+const onSeg = (p, a, b) => Math.abs(dist(a, p) + dist(p, b) - dist(a, b)) < .01;
+
+function route(from, to) {            // walk along the corridors between two anchors {pt, exit}
+  const n = { ...NODES, A: from.exit, B: to.exit }, e = EDGES.map((x) => [...x]);
+  for (const k of ["A", "B"]) for (const [u, v] of EDGES) if (onSeg(n[k], NODES[u], NODES[v])) e.push([k, u], [k, v]);
+  if (EDGES.some(([u, v]) => onSeg(n.A, NODES[u], NODES[v]) && onSeg(n.B, NODES[u], NODES[v]))) e.push(["A", "B"]);
+  const d = { A: 0 }, prev = {}, todo = new Set(Object.keys(n));
+  while (todo.size) {
+    let u = null; for (const k of todo) if (d[k] != null && (u == null || d[k] < d[u])) u = k;
+    if (u == null || u === "B") break; todo.delete(u);
+    for (const [a, b] of e) { const v = a === u ? b : b === u ? a : null; if (v && todo.has(v)) { const w = d[u] + dist(n[u], n[v]); if (d[v] == null || w < d[v]) { d[v] = w; prev[v] = u; } } }
+  }
+  const mid = []; for (let k = "B"; k && k !== "A"; k = prev[k]) mid.unshift(n[k]);
+  return [from.exit, ...mid, to.pt];
+}
+
+const short = (p) => p.split("/").pop().replace(/^\d{4}-\d\d-\d\d-/, "").replace(/\.md$/, "").replace(/-/g, " ");
+function line(a) {
+  if (a.state === "working") return "Working on it now.";
+  if (a.state === "needs-you") return `Waiting on sign-off: ${short(a.waiting[0])}.`;
+  if (a.state === "done" && a.last) return `Filed ${short(a.last.path)} ${ago(a.last.at)}.`;
+  return a.dept === "Inbox" ? "No comments or messages to answer yet." : "Nothing in my tray yet.";
+}
+
+function say(act, text, ms = 4200) {
+  act.say = { text, until: performance.now() + ms }; paintBubble(act);
+  logLine(`<b>${esc(act.a.title)}</b> ${esc(text)}`);
+  if (voices && "speechSynthesis" in window) { const u = new SpeechSynthesisUtterance(text); u.pitch = .8 + (act.n % 5) * .15; u.rate = 1.05; speechSynthesis.speak(u); }
+}
+
+function paintBubble(act) {
+  act.bubble.replaceChildren();
+  if (!act.say) return;
+  const words = act.say.text.split(" "), rows = [""];
+  for (const w of words) { if ((rows.at(-1) + " " + w).length > 26) rows.push(w); else rows[rows.length - 1] = (rows.at(-1) + " " + w).trim(); }
+  const w = Math.max(...rows.map((r) => r.length)) * 6.9 + 22, h = rows.length * 16 + 12, y0 = -108 - h;
+  act.bubble.append(el("rect", { class: "bub", x: -16, y: y0, width: w, height: h, rx: 8 }), quad([[-4, y0 + h - 1], [8, y0 + h - 1], [0, y0 + h + 8]], { class: "bub" }));
+  rows.forEach((r, i) => act.bubble.append(el("text", { class: "bubt", x: -5, y: y0 + 19 + i * 16 }, r)));
+}
+
+const anchorOf = (act) => ({ pt: act.home, exit: act.exit });
+const visitOf = (act) => act.a.dept === "Inbox" ? { pt: [act.home[0] + .9, act.home[1] + .25], exit: [19.5, act.home[1] + .25] } : { pt: [act.home[0] + .15, act.home[1] + .95], exit: [act.home[0] + .15, act.exit[1]] };
+const here = (act) => ({ pt: [act.x, act.y], exit: act.at?.exit || act.exit });
+
+function go(act, target, spot) { return { run() { act.path = route(here(act), target); act.at = target; }, done: () => !act.path.length, end() { if (spot === false) releaseSpots(act); } }; }
+const speak = (who, text, ms) => ({ run() { say(who, typeof text === "function" ? text() : text, ms); this.t = performance.now() + (ms || 4200) + 300; }, done() { return performance.now() > this.t; } });
+const pause = (ms) => ({ run() { this.t = performance.now() + ms; }, done() { return performance.now() > this.t; } });
+const carry = (act, on) => ({ run() { act.doc.style.display = on ? "" : "none"; }, done: () => true });
+const homeward = (act) => go(act, anchorOf(act), false);
+function releaseSpots(act) { for (const s of Object.values(SPOTS)) if (s.busy === act) s.busy = null; }
+function take(act, names) { const k = names.find((n) => !SPOTS[n].busy); if (!k) return null; SPOTS[k].busy = act; return SPOTS[k]; }
+
+function assign(act) {
+  const a = act.a, peer = actors.get(NEXT[a.id]);
+  if (a.state === "needs-you") { const s = take(act, ["director"]); if (s) return [go(act, s), speak(act, () => `Need your sign-off: ${short(a.waiting[0])}.`), homeward(act)]; }
+  if ((a.state === "done" || a.state === "needs-you") && a.last && peer && !peer.queue.length && peer.a.state !== "working")
+    return [carry(act, true), go(act, visitOf(peer)), speak(act, `${short(a.last.path)} is with you now.`, 3600), carry(act, false), speak(peer, "Got it. Thanks.", 2200), homeward(act)];
+  const s = take(act, Math.random() < .5 ? ["board1", "board2", "board3"] : ["lounge1", "lounge2"]);
+  if (s) return [go(act, s), speak(act, () => line(a)), pause(1500), homeward(act)];
+  return [speak(act, () => line(a))];
+}
+
+function direct() {                    // every few seconds, send one free agent off to do something
+  const now = performance.now(), busy = [...actors.values()].filter((x) => x.queue.length).length;
+  if (calm || document.hidden || busy >= 3) return;
+  const free = [...actors.values()].filter((x) => !x.queue.length && x.a.state !== "working" && now > x.rest);
+  if (!free.length) return;
+  const act = free[Math.floor(Math.random() * free.length)];
+  act.queue = assign(act); act.rest = now + 25000 + Math.random() * 30000; act.step = null;
+}
+
+let last = performance.now(), sorted = "";
+function frame(now) {
+  const dt = Math.min(.05, (now - last) / 1000); last = now;
+  for (const act of actors.values()) {
+    if (act.a.state === "working" && act.queue.length && !act.recalled) { act.queue = [homeward(act)]; act.step = null; act.recalled = true; act.doc.style.display = "none"; }
+    if (!act.step && act.queue.length) { act.step = act.queue[0]; act.step.run(); }
+    let moving = false;
+    if (act.path.length) {
+      const to = act.path[0], d = dist([act.x, act.y], to), s = 1.9 * dt; moving = true;
+      if (d <= s) { act.x = to[0]; act.y = to[1]; act.path.shift(); } else { act.x += (to[0] - act.x) / d * s; act.y += (to[1] - act.y) / d * s; }
+    }
+    if (act.step && act.step.done()) { act.step.end?.(); act.queue.shift(); act.step = null; if (!act.queue.length) { act.recalled = false; releaseSpots(act); } }
+    if (act.say && now > act.say.until) { act.say = null; paintBubble(act); }
+    const [px, py] = P(act.x, act.y);
+    act.g.setAttribute("transform", `translate(${px.toFixed(1)},${py.toFixed(1)})`);
+    act.hop.setAttribute("transform", `translate(0,${moving ? (-Math.abs(Math.sin(now / 95 + act.n)) * 4).toFixed(1) : 0})`);
+  }
+  const order = [...actors.values()].sort((p, q) => p.x + p.y - (q.x + q.y));
+  const key = order.map((o) => o.n).join();
+  if (key !== sorted && actorLayer) { sorted = key; order.forEach((o) => actorLayer.append(o.g)); }
+  requestAnimationFrame(frame);
+}
+
+function mountActors(svg, homes) {     // called on every redraw; positions and errands carry over
+  actorLayer = el("g"); sorted = "";
+  let n = 0;
+  for (const { a, home, exit } of homes) {
+    let act = actors.get(a.id);
+    if (!act) { act = { x: home[0], y: home[1], path: [], queue: [], step: null, rest: performance.now() + 3000 + Math.random() * 20000, say: null }; actors.set(a.id, act); }
+    Object.assign(act, { a, home, exit, n: n++ });
+    const g = el("g", { class: "agent actor" + (selected === a.id ? " sel" : ""), "data-state": a.state, tabindex: 0, role: "button", "aria-label": `${a.title}, ${a.dept}, ${LABEL[a.state]}` });
+    const hop = el("g"); hop.append(bot(0, 0));
+    const doc = quad([[10, -24], [22, -27], [24, -12], [12, -9]], { fill: "#f6f1e4", stroke: "#000", "stroke-width": .8 }); doc.style.display = act.doc && act.doc.style.display === "" ? "" : "none";
+    const bubble = el("g", { "aria-hidden": "true" });
+    g.append(hop, doc, plate(0, 0, a.title, SIG[a.state]), bubble);
+    Object.assign(act, { g, hop, doc, bubble }); paintBubble(act);
+    clickable(g, () => { selected = a.id; draw(); say(actors.get(a.id), line(a)); });
+    actorLayer.append(g);
+  }
+  svg.append(actorLayer);
+}
+
+const feed = [];
+function logLine(html) { feed.unshift({ html, at: Date.now() }); feed.length = Math.min(feed.length, 7); paintFeed(); }
+function paintFeed() { const f = document.getElementById("feed"); if (f) f.innerHTML = feed.map((x) => `<li>${x.html}</li>`).join("") || "<li>Quiet for the moment.</li>"; }
+
+// ---- chrome ---------------------------------------------------------------
+const ago = (t) => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? "just now" : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`; };
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const avatar = (human) => `<svg viewBox="-26 -58 52 60" aria-hidden="true"><rect x="-11" y="-28" width="22" height="30" rx="8" fill="${human ? "#f6f1e4" : "#d4a843"}"/><polygon points="-6,-28 6,-28 0,-20" fill="#f6f1e4"/><polygon points="-1.6,-26 1.6,-26 2.2,-13 0,-10 -2.2,-13" fill="#000"/>${human ? '<circle cx="0" cy="-40" r="10" fill="#d4a843"/>' : '<rect x="-13" y="-50" width="26" height="19" rx="8" fill="#f6f1e4"/><rect x="-9" y="-46" width="18" height="10" rx="5" fill="#000"/><circle cx="-4" cy="-41" r="2" fill="#d4a843"/><circle cx="4" cy="-41" r="2" fill="#d4a843"/>'}</svg>`;
+
+function chrome() {
+  const b = status.brain, t = status.totals;
+  document.getElementById("updated").textContent = "Floor status from " + ago(status.generatedAt);
+  document.getElementById("live").textContent = status.run ? `${status.run.command ? "Running /" + status.run.command : "A run is in progress"}, started ${ago(status.run.since)}` : "";
+  document.getElementById("totals").innerHTML =
+    `<div><b>${t.ideas}</b>idea lists</div><div><b>${t.scripts}</b>scripts</div><div><b>${t.edits}</b>cut lists</div><div><b>${t.queued}</b>queued to post</div><div class="wait"><b>${t.waiting}</b>awaiting sign-off</div><div><b>${b.filled}/${b.fields}</b>Brand Brain fields</div>`;
+
+  const panel = document.getElementById("panel");
+  const a = status.agents.find((x) => x.id === selected);
+  const op = document.body.classList.contains("operator");
+  if (!a) {
+    const files = [...new Set(status.agents.flatMap((x) => x.waiting))];
+    panel.innerHTML = `<div class="badge">${avatar(true)}<div><h2>You</h2><p class="dept">Director, the only human here</p></div></div>` +
+      (files.length ? `<h3>Awaiting your sign-off</h3><ul>${files.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>`
+        : `<p>Nothing is waiting on you. Select a desk to see what that agent does.</p>`) +
+      `<h3>On the floor</h3><ul id="feed"></ul>` +
+      (op && !b.ready ? `<h3>Before the next run</h3><p>The Brand Brain has empty fields. Run <code>/brain-setup</code> in Claude Code.</p>` : "");
+    paintFeed(); return;
+  }
+  const cmd = ROOMS[a.dept].cmd;
+  panel.innerHTML = `<div class="badge">${avatar(false)}<div><h2>${esc(a.title)}</h2><p class="dept">${esc(a.dept)} department</p></div></div>
+    <span class="state ${a.state}">${SIG[a.state]} ${LABEL[a.state]}</span>
+    <p>${esc(a.does)}</p>
+    <h3>Latest file</h3><ul><li>${a.last ? esc(a.last.path) + " (" + ago(a.last.at) + ")" : "Nothing yet"}</li></ul>
+    ${a.waiting.length ? `<h3>Awaiting sign-off</h3><ul>${a.waiting.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>` : ""}
+    <h3>Files written</h3><p>${a.count} in <code>${esc(a.out)}</code></p>
+    <h3>On the floor</h3><ul id="feed"></ul>
+    ${op ? `<h3>Put this department to work</h3><p><button data-cmd="${cmd}">Run /${cmd}</button></p>` : ""}`;
+  paintFeed();
+}
+
+function tick() { document.getElementById("now").textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); }
+
+// ---- operator controls: start a run through GitHub Actions ------------------
+const store = {
+  get() { try { return localStorage.getItem(TOKEN_KEY) || ""; } catch { return ""; } },
+  set(v) { try { v ? localStorage.setItem(TOKEN_KEY, v) : localStorage.removeItem(TOKEN_KEY); } catch {} },
+};
+let token = store.get(), watching = null;
+const note = (html) => { document.getElementById("runline").innerHTML = html; };
+const gh = (path, init = {}) => fetch(`https://api.github.com/repos/${REPO}/actions/workflows/${WORKFLOW}${path}`, {
+  ...init, headers: { Accept: "application/vnd.github+json", Authorization: `Bearer ${token}`, "X-GitHub-Api-Version": "2022-11-28" },
+});
+
+function opsView() {
+  document.body.classList.toggle("operator", location.hash === "#operator" || !!token);
+  document.getElementById("connect").hidden = !!token;
+  document.getElementById("cmds").hidden = !token;
+  if (!token) note("Connect once to run commands from this page.");
+}
+
+let active = null;                    // the run GitHub is working on right now, if any
+const deptsOf = (cmd) => Object.keys(ROOMS).filter((d) => !cmd || cmd === "daily" || ROOMS[d].cmd === cmd);
+const lastCmd = { get() { try { return localStorage.getItem(TOKEN_KEY + "-cmd") || ""; } catch { return ""; } }, set(v) { try { localStorage.setItem(TOKEN_KEY + "-cmd", v); } catch {} } };
+
+function applyActive() {              // show a run on the floor straight away, before the status file catches up
+  if (!status) return;
+  if (!("fileRun" in status)) status.fileRun = status.run || null;
+  for (const a of status.agents) { a.fileState ??= a.state; a.state = active && deptsOf(active.cmd).includes(a.dept) ? "working" : a.fileState; }
+  status.run = active ? { command: active.cmd, since: active.since } : status.fileRun;
+}
+function lockButtons(on) { document.querySelectorAll("[data-cmd]").forEach((b) => (b.disabled = on)); }
+
+async function run(cmd) {
+  if (!token || active) return;
+  lockButtons(true);
+  note(`Starting /${esc(cmd)}…`);
+  try {
+    const r = await gh("/dispatches", { method: "POST", body: JSON.stringify({ ref: "main", inputs: { command: cmd } }) });
+    if (r.status === 204) {
+      lastCmd.set(cmd); active = { cmd, since: Date.now(), url: "" }; applyActive(); draw();
+      note(`/${esc(cmd)} has started. It takes several minutes; the floor shows who is working.`);
+      setTimeout(watch, 6000); return;
+    }
+    if (r.status === 401 || r.status === 403) note("GitHub refused the token. It needs Actions read and write on the private repo. Disconnect and paste a new one.");
+    else if (r.status === 404) note("GitHub could not find the workflow. Check that the token covers the private repo.");
+    else note(`GitHub answered ${r.status}. Nothing was started.`);
+  } catch { note("Could not reach GitHub. Nothing was started."); }
+  lockButtons(false);
+}
+
+async function check() {
+  if (!token) return;
+  try {
+    const r = await gh("/runs?per_page=8"); if (!r.ok) return;
+    const runs = (await r.json()).workflow_runs || [];
+    const live = runs.find((x) => x.status === "in_progress") || runs.find((x) => x.status !== "completed");
+    const was = !!active;
+    if (live) {
+      active = { cmd: lastCmd.get(), since: Date.parse(live.run_started_at || live.created_at), url: live.html_url };
+      const waiting = runs.filter((x) => x.status !== "completed").length - 1;
+      note(`Agents are working${active.cmd ? " on /" + esc(active.cmd) : ""}, started ${ago(active.since)}. ${waiting > 0 ? waiting + " more queued. " : ""}<a href="${esc(live.html_url)}">Run log</a>`);
+      lockButtons(true);
+    } else {
+      active = null; lockButtons(false);
+      const done = runs[0];
+      note(done ? `Last run ${esc(done.conclusion || "finished")} ${ago(Date.parse(done.updated_at))}. <a href="${esc(done.html_url)}">Run log</a>` : "No runs yet. Pick a command.");
+      if (was) setTimeout(refresh, 45000);
+    }
+    if (was !== !!active || (active && status && !status.run)) { applyActive(); if (status) draw(); }
+  } catch {}
+}
+function watch() { clearInterval(watching); check(); watching = setInterval(check, 12000); }
+
+document.addEventListener("click", (e) => { const c = e.target.closest?.("[data-cmd]"); if (c) run(c.dataset.cmd); });
+document.getElementById("save").addEventListener("click", () => { const v = document.getElementById("tok").value.trim(); if (!v) return; token = v; store.set(v); document.getElementById("tok").value = ""; opsView(); note(""); watch(); if (status) chrome(); });
+document.getElementById("forget").addEventListener("click", () => { token = ""; store.set(""); clearInterval(watching); opsView(); if (status) chrome(); });
+addEventListener("hashchange", () => { opsView(); if (status) chrome(); });
+
+// ---- load -----------------------------------------------------------------
+async function refresh() {
+  const before = status && status.generatedAt;
+  try { const r = await fetch("status.json?" + Date.now(), { cache: "no-store" }); if (r.ok) status = await r.json(); } catch {}
+  status ||= window.OFFICE_STATUS;
+  if (status && status.generatedAt !== before) { applyActive(); draw(); } else if (status) chrome();
+  else document.getElementById("panel").innerHTML = "<h2>No status yet</h2><p>Run <code>npm run office</code> from the repo folder, then reload.</p>";
+}
+document.getElementById("voice").addEventListener("click", (e) => { voices = !voices; e.currentTarget.setAttribute("aria-pressed", voices); e.currentTarget.textContent = voices ? "Voices on" : "Voices off"; if (!voices && "speechSynthesis" in window) speechSynthesis.cancel(); });
+setInterval(direct, 2500); requestAnimationFrame(frame);
+opsView(); tick(); setInterval(tick, 20000);
+refresh(); setInterval(refresh, 30000);
+if (token) watch();
+</script>
+</body>
+</html>
